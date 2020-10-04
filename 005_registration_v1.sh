@@ -1,7 +1,7 @@
 #!/bin/bash
 echo \#
 #SBATCH 
-if [ ! -f /Users/hsm/Stroke/stroke_data_sorted/FengAHA005/FLAIR_AX/_flair_ax.nii.gz ]; then
+if [ ! -f /Users/hsm/Stroke/stroke_data_sorted/FengAHA005/FLAIR_AX/7_flair_ax.nii.gz ]; then
     echo "File not found!"
 
 else 
