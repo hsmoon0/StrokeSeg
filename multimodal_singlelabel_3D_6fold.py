@@ -465,9 +465,9 @@ def cnn(start_filter_num, filter_size, stride_size, dropout_ratio, kfold, nth_fo
 
 
 if __name__=='__main__':
-    cnn(32, 5, 2, 0, 1)
-    cnn(32, 5, 2, 0, 2)
-    cnn(32, 5, 2, 0, 3)
-    cnn(32, 5, 2, 0, 4)
-    cnn(32, 5, 2, 0, 5)
-    cnn(32, 5, 2, 0, 6)
+    cnn(32, 5, 2, 0, 6, 1)
+    cnn(32, 5, 2, 0, 6, 2)
+    cnn(32, 5, 2, 0, 6, 3)
+    cnn(32, 5, 2, 0, 6, 4)
+    cnn(32, 5, 2, 0, 6, 5)
+    cnn(32, 5, 2, 0, 6, 6)
