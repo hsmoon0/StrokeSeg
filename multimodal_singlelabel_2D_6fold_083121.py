@@ -261,26 +261,27 @@ def intensity_normalizer(image):
     return img_normalized
 
 
+def train_test_index(kfold, nth_fold, data_img):
+    data_length = len(data_img)
+    test_num = list(range(int(nth_fold)-1,data_length,kfold))
+    train_num_pre = list(range(0,data_length))
+
+    for i in range(0, len(test_num)):
+        train_num_pre[test_num[i]] = []
+    train_num = [ele for ele in train_num_pre if ele != []]
+    return test_num, train_num
 
 
-
-def data_organizer_random_2d(fold_num):
+def data_organizer_random_2d(kfold, nth_fold):
     
     image = nib.load('/home/alex/Stroke_multi/data/img_full.nii')
     data_img = image.get_fdata()
-
     mask = nib.load('/home/alex/Stroke_multi/data/mask_full.nii')
     data_mask = mask.get_fdata()
 
     data_norm = intensity_normalizer(data_img)
 
-    test_num = list(range(int(fold_num)-1,86,6))
-    train_num_pre = list(range(0,86))
-
-    for i in range(0, len(test_num)):
-        train_num_pre[test_num[i]] = []
-
-    train_num = res = [ele for ele in train_num_pre if ele != []]
+    test_num, train_num = train_test_index(kfold, nth_fold, data_mask)
     
 
     x_test_pre = data_norm[test_num,:,:,:,:]
@@ -311,14 +312,12 @@ def data_organizer_random_2d(fold_num):
     y_train = y_train_pre_pre[:,:,:,0]
     y_train = np.reshape(y_train, [len(y_train_pre_pre),512,512,1])
 
-
-
     return x_train, y_train, x_test, y_test
 
 
 
 
-def cnn(fliter_num,kernel_size, fold_num):
+def cnn(fliter_num, kernel_size, kfold, nth_fold):
     with strategy.scope():
         input_layer = keras.layers.Input(shape=(512, 512, 2))
         conv1a = keras.layers.Conv2D(filters=fliter_num, kernel_size=(kernel_size, kernel_size), activation='relu', padding='same')(input_layer)
@@ -350,23 +349,23 @@ def cnn(fliter_num,kernel_size, fold_num):
         opt = keras.optimizers.Adam(learning_rate=1e-5)
         model.compile(optimizer=opt, loss='binary_crossentropy', metrics=[dice_metric])
         #model.summary()
-    
-        x_train, y_train, x_val, y_val = data_organizer_random_2d(fold_num)
-    
-        history = model.fit(x_train,y_train, epochs=200, batch_size = 50, validation_data=(x_val, y_val))
+
+        x_train, y_train, x_val, y_val = data_organizer_random_2d(kfold, nth_fold)
+
+        history = model.fit(x_train,y_train, epochs=200, batch_size = 100, validation_data=(x_val, y_val))
 
 
         train_loss = history.history['loss']
-        np.save('/home/alex/Stroke_multi/results/train_loss_2d_fold_' + str(fold_num) + '_1.npy',train_loss)
+        np.save('/home/alex/Stroke_multi/results/train_loss_2d_fold_' + str(nth_fold) + '_2.npy',train_loss)
         train_acc = history.history['dice_metric']
-        np.save('/home/alex/Stroke_multi/results/train_acc_2d_fold_' + str(fold_num) + '_1.npy',train_acc)
+        np.save('/home/alex/Stroke_multi/results/train_acc_2d_fold_' + str(nth_fold) + '_2.npy',train_acc)
         val_loss = history.history['val_loss']
-        np.save('/home/alex/Stroke_multi/results/val_loss_2d_fold_' + str(fold_num) + '_1.npy',val_loss)
+        np.save('/home/alex/Stroke_multi/results/val_loss_2d_fold_' + str(nth_fold) + '_2.npy',val_loss)
         val_acc = history.history['val_dice_metric']
-        np.save('/home/alex/Stroke_multi/results/val_acc_2d_fold_' + str(fold_num) + '_1.npy',val_acc)
+        np.save('/home/alex/Stroke_multi/results/val_acc_2d_fold_' + str(nth_fold) + '_2.npy',val_acc)
 
-        model.save('/home/alex/Stroke_multi/results/model_2d_fold_' + str(fold_num) + '_1.h5')
-    
+        model.save('/home/alex/Stroke_multi/results/model_2d_fold_' + str(nth_fold) + '_2.h5')
+
         test_pred = model.predict(x_val)
 
 
@@ -376,16 +375,17 @@ def cnn(fliter_num,kernel_size, fold_num):
         nif_test = nib.Nifti1Image(y_val, affine=np.eye(4))
 
 
-        nib.save(nif_pred, '/home/alex/Stroke_multi/results/pred_2d_fold_' + str(fold_num) + '_1.nii')
-        nib.save(nif_test_b1000, '/home/alex/Stroke_multi/results/b1000_test_2d_fold_' + str(fold_num) + '_1.nii')
-        nib.save(nif_test_flair, '/home/alex/Stroke_multi/results/flair_test_2d_fold_' + str(fold_num) + '_1.nii')
-        nib.save(nif_test, '/home/alex/Stroke_multi/results/mask_test_2d_fold_' + str(fold_num) + '_1.nii')
+        nib.save(nif_pred, '/home/alex/Stroke_multi/results/pred_2d_fold_' + str(nth_fold) + '_2.nii')
+        nib.save(nif_test_b1000, '/home/alex/Stroke_multi/results/b1000_test_2d_fold_' + str(nth_fold) + '_2.nii')
+        nib.save(nif_test_flair, '/home/alex/Stroke_multi/results/flair_test_2d_fold_' + str(nth_fold) + '_2.nii')
+        nib.save(nif_test, '/home/alex/Stroke_multi/results/mask_test_2d_fold_' + str(nth_fold) + '_2.nii')
 
 
 if __name__=='__main__':
-    cnn(64,7,1)
-    cnn(64,7,2)
-    cnn(64,7,3)
-    cnn(64,7,4)
-    cnn(64,7,5)
-    cnn(64,7,6)
+    cnn(64,7,6,1)
+    cnn(64,7,6,2)
+    cnn(64,7,6,3)
+    cnn(64,7,6,4)
+    cnn(64,7,6,5)
+    cnn(64,7,6,6)
+
